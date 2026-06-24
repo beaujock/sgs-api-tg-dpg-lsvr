@@ -1,0 +1,440 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model lkp_absence_reason {
+  code          String         @id @db.VarChar(2)
+  display_value String
+  description   String?
+  sgs_presence  sgs_presence[]
+}
+
+model lkp_attendance_status {
+  code          String         @id @db.VarChar(2)
+  display_value String
+  description   String?
+  sgs_presence  sgs_presence[]
+}
+
+model lkp_exam_type {
+  code                       String                       @id @db.VarChar(2)
+  display_value              String
+  description                String?
+  sgs_administration_epreuve sgs_administration_epreuve[]
+}
+
+model lkp_gender {
+  code           String           @id @db.VarChar(2)
+  display_value  String
+  description    String?
+  sgs_eleve      sgs_eleve[]
+  sgs_enseignant sgs_enseignant[]
+}
+
+model lkp_instruction_status {
+  code            String            @id @db.VarChar(2)
+  display_value   String
+  description     String?
+  sgs_instruction sgs_instruction[]
+}
+
+model lkp_instruction_type {
+  code            String            @id @db.VarChar(2)
+  display_value   String
+  description     String?
+  sgs_instruction sgs_instruction[]
+}
+
+model lkp_jour {
+  code                       String                       @id @db.VarChar(2)
+  display_value              String
+  numeric_value              Int
+  description                String?
+  sgs_element_emploi_du_temp sgs_element_emploi_du_temp[]
+}
+
+model lkp_registration_status {
+  code            String            @id @db.VarChar(2)
+  display_value   String
+  description     String?
+  sgs_inscription sgs_inscription[]
+}
+
+model sgs_administration_epreuve {
+  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  epreuve_id          String            @db.Uuid
+  salle_classe_id     String?           @db.Uuid
+  administration_date DateTime          @db.Date
+  administrated_as    String?           @db.VarChar(2)
+  max_grade_points    Decimal           @db.Decimal(4, 2)
+  notes               String?           @db.VarChar(256)
+  create_date         DateTime          @db.Timestamptz(6)
+  created_by          String            @db.VarChar(64)
+  change_date         DateTime?         @db.Timestamptz(6)
+  changed_by          String?           @db.VarChar(64)
+  lkp_exam_type       lkp_exam_type?    @relation(fields: [administrated_as], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  sgs_matiere         sgs_matiere       @relation(fields: [epreuve_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_salle_classe    sgs_salle_classe? @relation(fields: [salle_classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_evaluation      sgs_evaluation[]
+}
+
+model sgs_annee_scolaire {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  start_date       DateTime           @db.Date
+  end_date         DateTime           @db.Date
+  notes            String?            @db.VarChar(256)
+  create_date      DateTime           @db.Timestamptz(6)
+  created_by       String             @db.VarChar(64)
+  change_date      DateTime?          @db.Timestamptz(6)
+  changed_by       String?            @db.VarChar(64)
+  sgs_salle_classe sgs_salle_classe[]
+}
+
+model sgs_classe {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  niveau_id        String             @db.Uuid
+  serie_id         String?            @db.Uuid
+  full_name        String             @db.VarChar(64)
+  short_name       String?            @db.VarChar(32)
+  code             String             @unique @db.VarChar(16)
+  description      String?            @db.VarChar(256)
+  notes            String?            @db.VarChar(256)
+  create_date      DateTime           @db.Timestamptz(6)
+  created_by       String             @db.VarChar(64)
+  change_date      DateTime?          @db.Timestamptz(6)
+  changed_by       String?            @db.VarChar(64)
+  sgs_niveau       sgs_niveau         @relation(fields: [niveau_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_serie        sgs_serie?         @relation(fields: [serie_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_epreuve      sgs_epreuve[]
+  sgs_salle_classe sgs_salle_classe[]
+}
+
+model sgs_element_emploi_du_temp {
+  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  emploi_du_temp_id  String             @db.Uuid
+  enseignant_id      String?            @db.Uuid
+  matiere_id         String?            @db.Uuid
+  jour               String             @db.VarChar(2)
+  start_date         DateTime           @db.Date
+  end_date           DateTime           @db.Date
+  start_time         DateTime           @db.Time(6)
+  end_time           DateTime           @db.Time(6)
+  notes              String?            @db.VarChar
+  create_date        DateTime           @db.Timestamptz(6)
+  created_by         String             @db.VarChar(64)
+  change_date        DateTime?          @db.Timestamptz(6)
+  changed_by         String?            @db.VarChar(64)
+  sgs_emploi_du_temp sgs_emploi_du_temp @relation(fields: [emploi_du_temp_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_enseignant     sgs_enseignant?    @relation(fields: [enseignant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lkp_jour           lkp_jour           @relation(fields: [jour], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  sgs_matiere        sgs_matiere?       @relation(fields: [matiere_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model sgs_eleve {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  matricule       String            @unique @db.VarChar(32)
+  last_name       String            @db.VarChar(64)
+  first_name      String            @db.VarChar(64)
+  other_names     String?           @db.VarChar(64)
+  preferred_name  String?           @db.VarChar(32)
+  date_of_birth   DateTime          @db.Date
+  gender          String            @db.VarChar(2)
+  phone_number    String?           @db.VarChar(16)
+  email           String?           @db.VarChar(64)
+  notes           String?           @db.VarChar
+  create_date     DateTime          @db.Timestamptz(6)
+  created_by      String            @db.VarChar(64)
+  change_date     DateTime?         @db.Timestamptz(6)
+  changed_by      String?           @db.VarChar(64)
+  lkp_gender      lkp_gender        @relation(fields: [gender], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  sgs_inscription sgs_inscription[]
+  sgs_presence    sgs_presence[]
+}
+
+model sgs_emploi_du_temp {
+  id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  salle_classe_id            String                       @db.Uuid
+  notes                      String?                      @db.VarChar
+  create_date                DateTime                     @db.Timestamptz(6)
+  created_by                 String                       @db.VarChar(64)
+  change_date                DateTime?                    @db.Timestamptz(6)
+  changed_by                 String?                      @db.VarChar(64)
+  sgs_element_emploi_du_temp sgs_element_emploi_du_temp[]
+  sgs_salle_classe           sgs_salle_classe             @relation(fields: [salle_classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_instruction            sgs_instruction[]
+}
+
+model sgs_enseignant {
+  id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  matricule                  String                       @unique @db.VarChar(32)
+  last_name                  String                       @db.VarChar(64)
+  first_name                 String                       @db.VarChar(64)
+  other_names                String?                      @db.VarChar(64)
+  preferred_name             String?                      @db.VarChar(32)
+  date_of_birth              DateTime                     @db.Date
+  gender                     String                       @db.VarChar(2)
+  phone_number               String?                      @db.VarChar(16)
+  email                      String?                      @db.VarChar(64)
+  notes                      String?                      @db.VarChar
+  create_date                DateTime                     @db.Timestamptz(6)
+  created_by                 String                       @db.VarChar(64)
+  change_date                DateTime?                    @db.Timestamptz(6)
+  changed_by                 String?                      @db.VarChar(64)
+  sgs_element_emploi_du_temp sgs_element_emploi_du_temp[]
+  lkp_gender                 lkp_gender                   @relation(fields: [gender], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  sgs_instruction            sgs_instruction[]
+  sgs_portfolio_enseignant   sgs_portfolio_enseignant[]
+}
+
+model sgs_enseignement {
+  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  systeme_scolaire_id  String               @db.Uuid
+  full_name            String               @db.VarChar(64)
+  short_name           String?              @db.VarChar(32)
+  code                 String               @unique @db.VarChar(16)
+  description          String?              @db.VarChar(256)
+  notes                String?              @db.VarChar
+  create_date          DateTime             @db.Timestamptz(6)
+  created_by           String               @db.VarChar(64)
+  change_date          DateTime?            @db.Timestamptz(6)
+  changed_by           String?              @db.VarChar(64)
+  sgs_systeme_scolaire sgs_systeme_scolaire @relation(fields: [systeme_scolaire_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_niveau           sgs_niveau[]
+  sgs_serie            sgs_serie[]
+}
+
+model sgs_epreuve {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  matiere_id     String      @db.Uuid
+  classe_id      String?     @db.Uuid
+  code           String      @unique @db.VarChar(32)
+  submitted_by   String?     @db.VarChar(128)
+  date_submitted DateTime?   @db.Date
+  notes          String?     @db.VarChar
+  create_date    DateTime    @db.Timestamptz(6)
+  created_by     String      @db.VarChar(64)
+  change_date    DateTime?   @db.Timestamptz(6)
+  changed_by     String?     @db.VarChar(64)
+  sgs_classe     sgs_classe? @relation(fields: [classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_matiere    sgs_matiere @relation(fields: [matiere_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model sgs_etablissement_scolaire {
+  id                     String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  full_name              String             @db.VarChar(64)
+  short_name             String?            @db.VarChar(32)
+  establishment_date     DateTime?          @db.Date
+  code                   String             @unique @db.VarChar(16)
+  primary_contact_name   String?            @db.VarChar(128)
+  secondary_contact_name String?            @db.VarChar(128)
+  contact_infos          String?            @db.VarChar(256)
+  phone_number           String?            @db.VarChar(256)
+  email                  String?            @db.VarChar(64)
+  website                String?            @db.VarChar(64)
+  notes                  String?            @db.VarChar
+  create_date            DateTime           @db.Timestamptz(6)
+  created_by             String             @db.VarChar(64)
+  change_date            DateTime?          @db.Timestamptz(6)
+  changed_by             String?            @db.VarChar(64)
+  sgs_salle_classe       sgs_salle_classe[]
+}
+
+model sgs_evaluation {
+  id                         String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  inscription_id             String                      @db.Uuid
+  administration_epreuve_id  String?                     @db.Uuid
+  grade_points_obtained      Decimal                     @db.Decimal(4, 2)
+  notes                      String?                     @db.VarChar
+  create_date                DateTime                    @db.Timestamptz(6)
+  created_by                 String                      @db.VarChar(64)
+  change_date                DateTime?                   @db.Timestamptz(6)
+  changed_by                 String?                     @db.VarChar(64)
+  sgs_administration_epreuve sgs_administration_epreuve? @relation(fields: [administration_epreuve_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_inscription            sgs_inscription             @relation(fields: [inscription_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model sgs_inscription {
+  id                      String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  salle_classe_id         String                  @db.Uuid
+  eleve_id                String?                 @db.Uuid
+  registration_date       DateTime                @db.Date
+  registration_status     String                  @db.VarChar(2)
+  status_notes            String?                 @db.VarChar(256)
+  notes                   String?                 @db.VarChar
+  create_date             DateTime                @db.Timestamptz(6)
+  created_by              String                  @db.VarChar(64)
+  change_date             DateTime?               @db.Timestamptz(6)
+  changed_by              String?                 @db.VarChar(64)
+  sgs_evaluation          sgs_evaluation[]
+  sgs_eleve               sgs_eleve?              @relation(fields: [eleve_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lkp_registration_status lkp_registration_status @relation(fields: [registration_status], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  sgs_salle_classe        sgs_salle_classe        @relation(fields: [salle_classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model sgs_instruction {
+  id                     String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  salle_classe_id        String                 @db.Uuid
+  enseignant_id          String?                @db.Uuid
+  matiere_id             String?                @db.Uuid
+  instruction_status     String                 @db.VarChar(2)
+  instruction_type       String                 @db.VarChar(2)
+  instruction_date       DateTime               @db.Date
+  start_time             DateTime               @db.Time(6)
+  end_time               DateTime               @db.Time(6)
+  notes                  String?                @db.VarChar
+  create_date            DateTime               @db.Timestamptz(6)
+  created_by             String                 @db.VarChar(64)
+  change_date            DateTime?              @db.Timestamptz(6)
+  changed_by             String?                @db.VarChar(64)
+  sgs_enseignant         sgs_enseignant?        @relation(fields: [enseignant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lkp_instruction_status lkp_instruction_status @relation(fields: [instruction_status], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  lkp_instruction_type   lkp_instruction_type   @relation(fields: [instruction_type], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  sgs_matiere            sgs_matiere?           @relation(fields: [matiere_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_emploi_du_temp     sgs_emploi_du_temp     @relation(fields: [salle_classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_presence           sgs_presence[]
+}
+
+model sgs_matiere {
+  id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  full_name                  String                       @db.VarChar(64)
+  short_name                 String?                      @db.VarChar(32)
+  code                       String                       @unique @db.VarChar(16)
+  description                String?                      @db.VarChar(256)
+  notes                      String?                      @db.VarChar
+  create_date                DateTime                     @db.Timestamptz(6)
+  created_by                 String                       @db.VarChar(64)
+  change_date                DateTime?                    @db.Timestamptz(6)
+  changed_by                 String?                      @db.VarChar(64)
+  sgs_administration_epreuve sgs_administration_epreuve[]
+  sgs_element_emploi_du_temp sgs_element_emploi_du_temp[]
+  sgs_epreuve                sgs_epreuve[]
+  sgs_instruction            sgs_instruction[]
+  sgs_salle_classe_matiere   sgs_salle_classe_matiere[]
+}
+
+model sgs_niveau {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enseignement_id  String           @db.Uuid
+  full_name        String           @db.VarChar(64)
+  short_name       String?          @db.VarChar(32)
+  code             String           @db.VarChar(16)
+  ranking          Int
+  description      String?          @db.VarChar(256)
+  notes            String?          @db.VarChar
+  create_date      DateTime         @db.Timestamptz(6)
+  created_by       String           @db.VarChar(64)
+  change_date      DateTime?        @db.Timestamptz(6)
+  changed_by       String?          @db.VarChar(64)
+  sgs_classe       sgs_classe[]
+  sgs_enseignement sgs_enseignement @relation(fields: [enseignement_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model sgs_portfolio_enseignant {
+  id                       String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  salle_classe_matiere_id  String                   @db.Uuid
+  enseignant_id            String?                  @db.Uuid
+  start_date               DateTime                 @db.Date
+  end_date                 DateTime?                @db.Date
+  notes                    String?                  @db.VarChar
+  create_date              DateTime                 @db.Timestamptz(6)
+  created_by               String                   @db.VarChar(64)
+  change_date              DateTime?                @db.Timestamptz(6)
+  changed_by               String?                  @db.VarChar(64)
+  sgs_enseignant           sgs_enseignant?          @relation(fields: [enseignant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_salle_classe_matiere sgs_salle_classe_matiere @relation(fields: [salle_classe_matiere_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model sgs_presence {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  instruction_id        String                @db.Uuid
+  eleve_id              String?               @db.Uuid
+  attendance_status     String                @db.VarChar(2)
+  reason_absence        String?               @db.VarChar(2)
+  attendance_note       String?               @db.VarChar(64)
+  notes                 String?               @db.VarChar
+  create_date           DateTime              @db.Timestamptz(6)
+  created_by            String                @db.VarChar(64)
+  change_date           DateTime?             @db.Timestamptz(6)
+  changed_by            String?               @db.VarChar(64)
+  lkp_attendance_status lkp_attendance_status @relation(fields: [attendance_status], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  sgs_eleve             sgs_eleve?            @relation(fields: [eleve_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_instruction       sgs_instruction       @relation(fields: [instruction_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lkp_absence_reason    lkp_absence_reason?   @relation(fields: [reason_absence], references: [code], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model sgs_salle_classe {
+  id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  etablissement_scolaire_id  String                       @db.Uuid
+  annee_scolaire_id          String?                      @db.Uuid
+  classe_id                  String?                      @db.Uuid
+  code                       String                       @db.VarChar(16)
+  description                String?                      @db.VarChar(256)
+  notes                      String?                      @db.VarChar
+  create_date                DateTime                     @db.Timestamptz(6)
+  created_by                 String                       @db.VarChar(64)
+  change_date                DateTime?                    @db.Timestamptz(6)
+  changed_by                 String?                      @db.VarChar(64)
+  sgs_administration_epreuve sgs_administration_epreuve[]
+  sgs_emploi_du_temp         sgs_emploi_du_temp[]
+  sgs_inscription            sgs_inscription[]
+  sgs_annee_scolaire         sgs_annee_scolaire?          @relation(fields: [annee_scolaire_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_classe                 sgs_classe?                  @relation(fields: [classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_etablissement_scolaire sgs_etablissement_scolaire   @relation(fields: [etablissement_scolaire_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_salle_classe_matiere   sgs_salle_classe_matiere[]
+}
+
+model sgs_salle_classe_matiere {
+  id                       String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  matiere_id               String                     @db.Uuid
+  salle_classe_id          String?                    @db.Uuid
+  power                    Int?
+  active                   Boolean                    @default(true)
+  notes                    String?                    @db.VarChar
+  create_date              DateTime                   @db.Timestamptz(6)
+  created_by               String                     @db.VarChar(64)
+  change_date              DateTime?                  @db.Timestamptz(6)
+  changed_by               String?                    @db.VarChar(64)
+  sgs_portfolio_enseignant sgs_portfolio_enseignant[]
+  sgs_matiere              sgs_matiere                @relation(fields: [matiere_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_salle_classe         sgs_salle_classe?          @relation(fields: [salle_classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model sgs_serie {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enseignement_id  String           @db.Uuid
+  full_name        String           @db.VarChar(64)
+  short_name       String?          @db.VarChar(32)
+  code             String           @unique @db.VarChar(16)
+  description      String?          @db.VarChar(256)
+  notes            String?          @db.VarChar
+  create_date      DateTime         @db.Timestamptz(6)
+  created_by       String           @db.VarChar(64)
+  change_date      DateTime?        @db.Timestamptz(6)
+  changed_by       String?          @db.VarChar(64)
+  sgs_classe       sgs_classe[]
+  sgs_enseignement sgs_enseignement @relation(fields: [enseignement_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model sgs_systeme_scolaire {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  full_name        String             @db.VarChar(64)
+  short_name       String?            @db.VarChar(32)
+  code             String             @unique @db.VarChar(16)
+  primary_owner    String             @db.VarChar(128)
+  secondary_owner  String?            @db.VarChar(128)
+  contact_infos    String?            @db.VarChar(256)
+  website          String?            @db.VarChar(128)
+  notes            String?            @db.VarChar
+  create_date      DateTime           @db.Timestamptz(6)
+  created_by       String             @db.VarChar(64)
+  change_date      DateTime?          @db.Timestamptz(6)
+  changed_by       String?            @db.VarChar(64)
+  sgs_enseignement sgs_enseignement[]
+}
