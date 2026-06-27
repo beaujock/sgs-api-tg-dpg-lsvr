@@ -1,4 +1,4 @@
-import { LSVRdbConnection } from "@/types/connections/LSVRdbConnection";
+import { LSVRdbConnection } from "@/types/connection/LSVRdbConnection";
 import { prisma } from "./prisma";
 
 export async function checkConnection() : Promise<LSVRdbConnection> {
@@ -7,7 +7,7 @@ export async function checkConnection() : Promise<LSVRdbConnection> {
         await prisma.$queryRaw`SELECT 1`;
         return {
             isConnected: true,
-            connectionMessage: "You are connected to TCV Database!",
+            connectionMessage: "Vous êtes connecté. !",
             client: prisma
         }
     }
@@ -15,7 +15,7 @@ export async function checkConnection() : Promise<LSVRdbConnection> {
         console.log("ERROR : ", error);
         return {
             isConnected: false,
-            connectionMessage: "Connection to the TCV Database has failed : " + error,
+            connectionMessage: "La tentative de connection a échoué" + error,
             client: null
         }
     }

@@ -438,3 +438,141 @@ model sgs_systeme_scolaire {
   changed_by       String?            @db.VarChar(64)
   sgs_enseignement sgs_enseignement[]
 }
+
+model lkp_access_status {
+  code                String                @id @db.VarChar(2)
+  display_value       String
+  description         String?
+  sgs_role_permission sgs_role_permission[]
+  sgs_user_access     sgs_user_access[]
+  sgs_user_role       sgs_user_role[]
+}
+
+model sgs_permission {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String                @db.VarChar(128)
+  code                String                @db.VarChar(32)
+  description         String?               @db.VarChar(256)
+  notes               String?               @db.VarChar
+  create_date         DateTime              @db.Timestamptz(6)
+  created_by          String                @db.VarChar(64)
+  change_date         DateTime?             @db.Timestamptz(6)
+  changed_by          String?               @db.VarChar(64)
+  sgs_role_permission sgs_role_permission[]
+}
+
+model sgs_role {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String                @db.VarChar(128)
+  code                String                @db.VarChar(32)
+  description         String?               @db.VarChar(256)
+  notes               String?               @db.VarChar
+  create_date         DateTime              @db.Timestamptz(6)
+  created_by          String                @db.VarChar(64)
+  change_date         DateTime?             @db.Timestamptz(6)
+  changed_by          String?               @db.VarChar(64)
+  sgs_role_permission sgs_role_permission[]
+  sgs_user_role       sgs_user_role[]
+}
+
+model sgs_role_permission {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  role_id           String            @db.Uuid
+  permission_id     String            @db.Uuid
+  effective_date    DateTime          @db.Date
+  expiry_date       DateTime?         @db.Date
+  status            String            @default("A") @db.VarChar(2)
+  notes             String?           @db.VarChar
+  create_date       DateTime          @db.Timestamptz(6)
+  created_by        String            @db.VarChar(64)
+  change_date       DateTime?         @db.Timestamptz(6)
+  changed_by        String?           @db.VarChar(64)
+  sgs_permission    sgs_permission    @relation(fields: [permission_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_role          sgs_role          @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lkp_access_status lkp_access_status @relation(fields: [status], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  sgs_user_access   sgs_user_access[]
+}
+
+model sgs_user {
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_name            String            @db.VarChar(32)
+  full_name            String            @db.VarChar(64)
+  email                String            @db.VarChar(64)
+  phone                String?           @db.VarChar(32)
+  pwd_hash             String?           @db.VarChar
+  salt                 String?           @db.VarChar
+  token                String?           @db.VarChar
+  token_effective_time DateTime?         @db.Timestamptz(6)
+  token_expiry_time    DateTime?         @db.Timestamptz(6)
+  notes                String?           @db.VarChar
+  create_date          DateTime          @db.Timestamptz(6)
+  created_by           String            @db.VarChar(64)
+  change_date          DateTime?         @db.Timestamptz(6)
+  changed_by           String?           @db.VarChar(64)
+  sgs_user_access      sgs_user_access[]
+  sgs_user_role        sgs_user_role[]
+}
+
+model sgs_user_role {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  role_id           String            @db.Uuid
+  user_id           String            @db.Uuid
+  effective_date    DateTime          @db.Date
+  expiry_date       DateTime?         @db.Date
+  status            String            @default("A") @db.VarChar(2)
+  notes             String?           @db.VarChar
+  create_date       DateTime          @db.Timestamptz(6)
+  created_by        String            @db.VarChar(64)
+  change_date       DateTime?         @db.Timestamptz(6)
+  changed_by        String?           @db.VarChar(64)
+  sgs_role          sgs_role          @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lkp_access_status lkp_access_status @relation(fields: [status], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  sgs_user          sgs_user          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model lkp_resource_category {
+  code              String              @id @db.VarChar(16)
+  display_value     String
+  description       String?
+  lkp_resource_type lkp_resource_type[]
+}
+
+model lkp_resource_type {
+  code                  String                @id @db.VarChar(16)
+  category              String                @db.VarChar(16)
+  value                 String
+  display_value         String
+  description           String?
+  lkp_resource_category lkp_resource_category @relation(fields: [category], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  sgs_resource          sgs_resource[]
+}
+
+model sgs_resource {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  resource_id       String            @db.Uuid
+  resource_type     String            @db.VarChar(16)
+  notes             String?           @db.VarChar
+  create_date       DateTime          @db.Timestamptz(6)
+  created_by        String            @db.VarChar(64)
+  change_date       DateTime?         @db.Timestamptz(6)
+  changed_by        String?           @db.VarChar(64)
+  lkp_resource_type lkp_resource_type @relation(fields: [resource_type], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  sgs_user_access   sgs_user_access[]
+}
+
+model sgs_user_access {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  role_permission_id  String              @db.Uuid
+  resource_id         String              @db.Uuid
+  user_id             String              @db.Uuid
+  status              String              @default("A") @db.VarChar(2)
+  notes               String?             @db.VarChar
+  create_date         DateTime            @db.Timestamptz(6)
+  created_by          String              @db.VarChar(64)
+  change_date         DateTime?           @db.Timestamptz(6)
+  changed_by          String?             @db.VarChar(64)
+  sgs_resource        sgs_resource        @relation(fields: [resource_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_role_permission sgs_role_permission @relation(fields: [role_permission_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lkp_access_status   lkp_access_status   @relation(fields: [status], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  sgs_user            sgs_user            @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
