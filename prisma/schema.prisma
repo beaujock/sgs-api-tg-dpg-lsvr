@@ -495,12 +495,11 @@ model sgs_role_permission {
 
 model sgs_user {
   id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_name            String            @db.VarChar(32)
+  user_name            String            @unique @db.VarChar(32)
   full_name            String            @db.VarChar(64)
-  email                String            @db.VarChar(64)
+  email                String            @unique @db.VarChar(64)
   phone                String?           @db.VarChar(32)
   pwd_hash             String?           @db.VarChar
-  salt                 String?           @db.VarChar
   token                String?           @db.VarChar
   token_effective_time DateTime?         @db.Timestamptz(6)
   token_expiry_time    DateTime?         @db.Timestamptz(6)
