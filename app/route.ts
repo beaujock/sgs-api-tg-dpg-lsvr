@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  return NextResponse.json({ message: "API - Complexe Scolaire le Savoir - Dapaong - Togo" });
+  return NextResponse.json({ message: "API - Complexe Scolaire le Savoir - Togo" });
 }

@@ -4,8 +4,8 @@ import type { Secret, SignOptions } from 'jsonwebtoken';
 
 
 
-const JWT_SECRET:Secret = process.env.JWT_SECRET || 'fJ_JH%$jgKJKghg231egjklh213@#125__zq'; // Use a strong default for development, but always use env in production
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
+const JWT_SECRET:Secret = process.env.JWT_SECRET! // Use a strong default for development, but always use env in production
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN;
 
 export const generateToken = (payload: Record<string, any>) => {
   const options: SignOptions = { expiresIn: JWT_EXPIRES_IN as any };
