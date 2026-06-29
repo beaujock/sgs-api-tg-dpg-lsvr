@@ -1,10 +1,13 @@
 import { checkConnection } from "@/lib/LSVRdbConnect";
 import { LSVRdbConnection } from "@/types/connection/LSVRdbConnection";
 import { PrismaClient } from "@/lib/generated/prisma/client";
-import { DisplayUserDO, ToDisplayUserDO } from "@/types/user/DisplayUserDO";
+import { UserDO, ToDisplayUserDO } from "@/types/user/UserDO";
+import { InfoUserTokenDO, ToInfoUserTokenDO } from "@/types/user/InfoUserTokenDO";
 import { CreateUserDO } from "@/types/user/CreateUserDO";
 
-export async function getUser(login:string|null, password:string|null) : Promise<DisplayUserDO|null> {
+const ErrorOrigin = "userFactory - ";
+
+export async function getUser(login:string|null, password:string|null) : Promise<UserDO|null> {
     console.log("Entering GETUSER");
     try {
         let user;
@@ -41,7 +44,7 @@ export async function getUser(login:string|null, password:string|null) : Promise
     }
 }
 
-export async function createUser(userToCreate : CreateUserDO) : Promise<DisplayUserDO|null> {
+export async function createUser(userToCreate : CreateUserDO) : Promise<UserDO|null> {
     try {
         if (userToCreate === null) throw new Error("Information manquantes: ");
         if (userToCreate.full_name === null || userToCreate.email === null || userToCreate.pwd === null || userToCreate.created_by === null) {
@@ -80,7 +83,7 @@ export async function createUser(userToCreate : CreateUserDO) : Promise<DisplayU
 export async function addUserSession(userID:string, token:string, effective_date : Date, expiry_date : Date) : Promise<boolean> {
   try {
     if (!userID || !token || !effective_date || !expiry_date) {
-      console.log ("issue with sure id or token or ExpiresAT")
+      console.log ("issue with user id or token or ExpiresAT")
       return false;
     }
 
@@ -132,3 +135,43 @@ export async function getUserRoles(userID : string) : Promise<string[]> {
         throw new Error("Echec : Recherche de roles de l'utilisateur");
     }
 }
+
+export async function getUserTokenInfosById(userId : string) : Promise<InfoUserTokenDO|null> {
+    const functionName = "getEleveById - ";
+    try {
+        const connection:LSVRdbConnection = await checkConnection();
+        if(!connection.isConnected || !connection.client) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
+        const client:PrismaClient = connection.client;
+        const user = await client.sgs_user.findUnique({
+            where : {
+                id : userId
+            }
+        });
+        if (!user) return null;
+        return ToInfoUserTokenDO(user);
+    }
+    catch(error){
+        throw new Error(ErrorOrigin + functionName + error);
+    }
+}
+
+/*
+export async function getUserById(eleveId : string) : Promise<EleveDO|null> {
+    const functionName = "getEleveById - ";
+    try {
+        const connection:LSVRdbConnection = await checkConnection();
+        if(!connection.isConnected || !connection.client) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
+        const client:PrismaClient = connection.client;
+        const eleve = await client.sgs_eleve.findUnique({
+            where : {
+                id : eleveId
+            }
+        });
+        if (!eleve) return null;
+        return ToEleveDO(eleve);
+    }
+    catch(error){
+        throw new Error(ErrorOrigin + functionName + error);
+    }
+}
+*/

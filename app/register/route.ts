@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUser } from '@/factories/userFactory';
-import { DisplayUserDO } from '@/types/user/DisplayUserDO';
+import { UserDO } from '@/types/user/UserDO';
 import { CreateUserDO } from '@/types/user/CreateUserDO';
 
 export async function POST(request: NextRequest) {
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
         created_by : body.created_by
     };
     console.log("User to register : ", userToRegister);
-    const newUser: DisplayUserDO|null = await createUser(userToRegister);
+    const newUser: UserDO|null = await createUser(userToRegister);
     return NextResponse.json({ message: "Succès : Création d'utilisateur", registeredUser: newUser }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: "Echec : Création d'utilisateur" }, { status: 500 });

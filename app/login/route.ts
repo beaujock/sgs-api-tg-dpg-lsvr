@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DisplayUserDO } from "@/types/user/DisplayUserDO";
+import { UserDO } from "@/types/user/UserDO";
 import { getUser, getUserRoles, addUserSession} from "@/factories/userFactory";
 import { generateToken } from "@/lib/auth";
 
@@ -15,12 +15,12 @@ export async function POST(request:NextRequest) {
         };
         console.log("request :", loginRequest);
         if (!loginRequest.user_name || !loginRequest.password) return NextResponse.json("Informations de connexion manquantes", { status: 400 });
-        const user:DisplayUserDO|null = await getUser(loginRequest.user_name, loginRequest.password);
+        const user:UserDO|null = await getUser(loginRequest.user_name, loginRequest.password);
         console.log("User :", user);
         if (!user) return NextResponse.json("Utilisateur non trouvé", { status: 404 });
         const userRoles = await getUserRoles(user.id);
         const cookie_name = process.env.COOKIE_NAME;
-        const expiry_date_time = new Date(Date.now() + Number(process.env.JWT_EXPIRES_IN) * 60 * 60 * 1000);
+        const expiry_date_time = new Date(Date.now() + Number(process.env.JWT_EXPIRES_IN!) * 60 * 60 * 1000);
         const token = generateToken({
             "isAuthenticated" : true,
             "user" : {
@@ -29,10 +29,8 @@ export async function POST(request:NextRequest) {
                 "roles" : userRoles
             }
         });
-        if (token) {
-            const sessionAdded:boolean = await addUserSession(user.id, token, new Date(Date.now()), expiry_date_time);
-        };
-        return NextResponse.json({ message: "Succès : Connexion réussie", token : token, cookie_name: cookie_name, effective_date : new Date(Date.now()),  expiry_date : expiry_date_time}, { status: 200 });
+        const sessionAdded:boolean = await addUserSession(user.id, token, new Date(Date.now()), expiry_date_time);
+        return NextResponse.json({ message: "Succès : Connexion réussie", session_added : sessionAdded, token : token, cookie_name: cookie_name, effective_date : new Date(Date.now()),  expiry_date : expiry_date_time}, { status: 200 });
 
     }
     catch(error) {

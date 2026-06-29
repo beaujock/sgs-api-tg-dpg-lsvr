@@ -1,6 +1,6 @@
 import { sgs_user } from "@/lib/generated/prisma/client";
 
-export type DisplayUserDO = {
+export type UserDO = {
     id                   : string;
     user_name            : string;
     full_name            : string;
@@ -9,7 +9,7 @@ export type DisplayUserDO = {
     notes                : string|null;  
 }
 
-export function ToDisplayUserDO(user : sgs_user) : DisplayUserDO {
+export function ToDisplayUserDO(user : sgs_user) : UserDO {
     return {
         id                   : user.id,
         user_name            : user.user_name,

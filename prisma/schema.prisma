@@ -262,7 +262,7 @@ model sgs_evaluation {
 model sgs_inscription {
   id                      String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   salle_classe_id         String                  @db.Uuid
-  eleve_id                String?                 @db.Uuid
+  eleve_id                String                  @db.Uuid
   registration_date       DateTime                @db.Date
   registration_status     String                  @db.VarChar(2)
   status_notes            String?                 @db.VarChar(256)
@@ -272,7 +272,7 @@ model sgs_inscription {
   change_date             DateTime?               @db.Timestamptz(6)
   changed_by              String?                 @db.VarChar(64)
   sgs_evaluation          sgs_evaluation[]
-  sgs_eleve               sgs_eleve?              @relation(fields: [eleve_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_eleve               sgs_eleve               @relation(fields: [eleve_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lkp_registration_status lkp_registration_status @relation(fields: [registration_status], references: [code], onDelete: NoAction, onUpdate: NoAction)
   sgs_salle_classe        sgs_salle_classe        @relation(fields: [salle_classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
@@ -372,8 +372,8 @@ model sgs_presence {
 model sgs_salle_classe {
   id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   etablissement_scolaire_id  String                       @db.Uuid
-  annee_scolaire_id          String?                      @db.Uuid
-  classe_id                  String?                      @db.Uuid
+  annee_scolaire_id          String                       @db.Uuid
+  classe_id                  String                       @db.Uuid
   code                       String                       @db.VarChar(16)
   description                String?                      @db.VarChar(256)
   notes                      String?                      @db.VarChar
@@ -384,8 +384,8 @@ model sgs_salle_classe {
   sgs_administration_epreuve sgs_administration_epreuve[]
   sgs_emploi_du_temp         sgs_emploi_du_temp[]
   sgs_inscription            sgs_inscription[]
-  sgs_annee_scolaire         sgs_annee_scolaire?          @relation(fields: [annee_scolaire_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  sgs_classe                 sgs_classe?                  @relation(fields: [classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_annee_scolaire         sgs_annee_scolaire           @relation(fields: [annee_scolaire_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_classe                 sgs_classe                   @relation(fields: [classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   sgs_etablissement_scolaire sgs_etablissement_scolaire   @relation(fields: [etablissement_scolaire_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   sgs_salle_classe_matiere   sgs_salle_classe_matiere[]
 }
@@ -393,7 +393,7 @@ model sgs_salle_classe {
 model sgs_salle_classe_matiere {
   id                       String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   matiere_id               String                     @db.Uuid
-  salle_classe_id          String?                    @db.Uuid
+  salle_classe_id          String                     @db.Uuid
   power                    Int?
   active                   Boolean                    @default(true)
   notes                    String?                    @db.VarChar
@@ -403,7 +403,7 @@ model sgs_salle_classe_matiere {
   changed_by               String?                    @db.VarChar(64)
   sgs_portfolio_enseignant sgs_portfolio_enseignant[]
   sgs_matiere              sgs_matiere                @relation(fields: [matiere_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  sgs_salle_classe         sgs_salle_classe?          @relation(fields: [salle_classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_salle_classe         sgs_salle_classe           @relation(fields: [salle_classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model sgs_serie {

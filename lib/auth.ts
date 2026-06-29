@@ -8,13 +8,17 @@ const JWT_SECRET:Secret = process.env.JWT_SECRET! // Use a strong default for de
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN;
 
 export const generateToken = (payload: Record<string, any>) => {
-  const options: SignOptions = { expiresIn: JWT_EXPIRES_IN as any };
-  return jwt.sign(payload, JWT_SECRET, options);
+  //const options: SignOptions = { expiresIn: JWT_EXPIRES_IN as any };
+  return jwt.sign(payload, JWT_SECRET);
 };
 
 export const verifyToken = (token: string) => {
+  //console.log("JWT secret : ", JWT_SECRET);
+  //console.log("Token : ", token);
   try {
-    return jwt.verify(token, JWT_SECRET);
+    const result = jwt.verify(token, JWT_SECRET, { clockTolerance: 60 });
+    //console.log("Result : ", result);
+    return result;
   } catch (error) {
     return null; // Token is invalid or expired
   }
