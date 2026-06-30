@@ -4,6 +4,8 @@ import { PrismaClient } from "@/lib/generated/prisma/client";
 import { UserDO, ToDisplayUserDO } from "@/types/user/UserDO";
 import { InfoUserTokenDO, ToInfoUserTokenDO } from "@/types/user/InfoUserTokenDO";
 import { CreateUserDO } from "@/types/user/CreateUserDO";
+import { InfoBasicEleveDO, ToInfoBasicEleveDO } from "@/types/eleve/InfoBasicEleveDO";
+import { getEleveById } from "./eleveFactory";
 
 const ErrorOrigin = "userFactory - ";
 
@@ -137,7 +139,7 @@ export async function getUserRoles(userID : string) : Promise<string[]> {
 }
 
 export async function getUserTokenInfosById(userId : string) : Promise<InfoUserTokenDO|null> {
-    const functionName = "getEleveById - ";
+    const functionName = "getUserTokenInfosById - ";
     try {
         const connection:LSVRdbConnection = await checkConnection();
         if(!connection.isConnected || !connection.client) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
@@ -155,23 +157,71 @@ export async function getUserTokenInfosById(userId : string) : Promise<InfoUserT
     }
 }
 
-/*
-export async function getUserById(eleveId : string) : Promise<EleveDO|null> {
-    const functionName = "getEleveById - ";
+
+export async function isValidTokenAndRoute(userId : string, route : string) : Promise<boolean> {
+    const functionName = "isUserRouteAllowed - ";
+    console.log("isUserRouteAllowed");
     try {
-        const connection:LSVRdbConnection = await checkConnection();
-        if(!connection.isConnected || !connection.client) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
-        const client:PrismaClient = connection.client;
-        const eleve = await client.sgs_eleve.findUnique({
+        const userTokenInfos = await getUserTokenInfosById(userId);
+        console.log("userTokenInfos");
+        if (!userTokenInfos) throw new Error(ErrorOrigin + functionName + "Accès non authorisé - Pas de jeton");
+        if (!userTokenInfos.token || !userTokenInfos.token_effective_date || !userTokenInfos.token_expiry_date) throw new Error(ErrorOrigin + functionName + "Accès non authorisé - Jeton invalide");
+        const jwt = require('jsonwebtoken');
+        const JWT_SECRET = process.env.JWT_SECRET;
+        const decodedPayload = jwt.verify(userTokenInfos.token,JWT_SECRET);
+        console.log("decodedPayload");
+        if (!decodedPayload) throw new Error(ErrorOrigin + functionName + "Accès non authorisé - Jeton non décodé");
+        console.log("good route ?");
+        const today = new Date(Date.now());
+        console.log("Token details", userTokenInfos);
+        if ((today < userTokenInfos.token_effective_date) || (today > userTokenInfos.token_expiry_date)) throw new Error(ErrorOrigin + functionName + "Accès non authorisé - Jeton expiré");
+        console.log("compare date ?");
+        if (!(decodedPayload.user.roles).includes(route.toUpperCase())) return false;
+        return true;
+    }
+    catch(error) {
+        console.log("Error", (error as Error).name);
+        throw new Error(ErrorOrigin + functionName + (error as Error).name);
+    }
+}
+
+export async function getUserEleveResource(userId : string) : Promise<InfoBasicEleveDO|null> {
+    console.log("getUserEleveResource");
+    const functionName = "getUserEleveResource - ";
+    try {
+        const eleveIDs:string[] = [];
+        const isUserAllowed = await isValidTokenAndRoute(userId, 'ELEVE');
+        if (!isUserAllowed) return null;
+        console.log("USER IS ALLOWED");
+        const connection : LSVRdbConnection = await checkConnection();
+        if (!connection.isConnected || !connection.client) throw new Error("La connexion à la base de données a échoué: " + connection.connectionMessage);
+        const client : PrismaClient = connection.client;
+        const userResources = await client.sgs_user_resource.findMany({
             where : {
-                id : eleveId
+                user_id : userId,
+                status : 'A'
+            },
+            include : {
+                sgs_resource : true
             }
         });
+        console.log("USER resources", userResources);
+        userResources.forEach(userResource => {
+            if (userResource.sgs_resource.resource_type.toUpperCase() === 'ELEVE') eleveIDs.push(userResource.sgs_resource.resource_id);
+        });
+        if (eleveIDs.length === 0) return null;
+        if (eleveIDs.length > 1) return null;
+        console.log("Eleve IDs", eleveIDs);
+        const eleve = await client.sgs_eleve.findUnique({
+            where : {
+                id : eleveIDs[0]
+            }
+        });
+        console.log("Eleve", eleve);
         if (!eleve) return null;
-        return ToEleveDO(eleve);
+        return ToInfoBasicEleveDO(eleve);
     }
-    catch(error){
+    catch(error) {
         throw new Error(ErrorOrigin + functionName + error);
     }
 }
-*/

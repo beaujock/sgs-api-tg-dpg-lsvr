@@ -1,7 +1,7 @@
 import { PrismaClient } from "@/lib/generated/prisma/client";
 import { checkConnection } from "@/lib/LSVRdbConnect";
 import { LSVRdbConnection } from "@/types/connection/LSVRdbConnection";
-import { SalleClasseDO,ToSalleClasseDO } from "@/types/salleclasse/salleClasseDO";
+import { SalleClasseDO, ToSalleClasseDO } from "@/types/salleclasse/SalleClasseDO";
 
 const ErrorOrigin = "salleClasseFactory - ";
 
