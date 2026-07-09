@@ -56,6 +56,7 @@ model lkp_jour {
   numeric_value              Int
   description                String?
   sgs_element_emploi_du_temp sgs_element_emploi_du_temp[]
+  sgs_time_slot_group_item   sgs_time_slot_group_item[]
 }
 
 model lkp_registration_status {
@@ -129,6 +130,7 @@ model sgs_element_emploi_du_temp {
   created_by         String             @db.VarChar(64)
   change_date        DateTime?          @db.Timestamptz(6)
   changed_by         String?            @db.VarChar(64)
+  description        String?            @db.VarChar(32)
   sgs_emploi_du_temp sgs_emploi_du_temp @relation(fields: [emploi_du_temp_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   sgs_enseignant     sgs_enseignant?    @relation(fields: [enseignant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lkp_jour           lkp_jour           @relation(fields: [jour], references: [code], onDelete: NoAction, onUpdate: NoAction)
@@ -166,7 +168,6 @@ model sgs_emploi_du_temp {
   changed_by                 String?                      @db.VarChar(64)
   sgs_element_emploi_du_temp sgs_element_emploi_du_temp[]
   sgs_salle_classe           sgs_salle_classe             @relation(fields: [salle_classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  sgs_instruction            sgs_instruction[]
 }
 
 model sgs_enseignant {
@@ -292,11 +293,12 @@ model sgs_instruction {
   created_by             String                 @db.VarChar(64)
   change_date            DateTime?              @db.Timestamptz(6)
   changed_by             String?                @db.VarChar(64)
+  description            String?                @db.VarChar(32)
+  sgs_salle_classe       sgs_salle_classe       @relation(fields: [salle_classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "sgs_inscription_salle_classe_id_fkey")
   sgs_enseignant         sgs_enseignant?        @relation(fields: [enseignant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lkp_instruction_status lkp_instruction_status @relation(fields: [instruction_status], references: [code], onDelete: NoAction, onUpdate: NoAction)
   lkp_instruction_type   lkp_instruction_type   @relation(fields: [instruction_type], references: [code], onDelete: NoAction, onUpdate: NoAction)
   sgs_matiere            sgs_matiere?           @relation(fields: [matiere_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  sgs_emploi_du_temp     sgs_emploi_du_temp     @relation(fields: [salle_classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   sgs_presence           sgs_presence[]
 }
 
@@ -384,6 +386,7 @@ model sgs_salle_classe {
   sgs_administration_epreuve sgs_administration_epreuve[]
   sgs_emploi_du_temp         sgs_emploi_du_temp[]
   sgs_inscription            sgs_inscription[]
+  sgs_instruction            sgs_instruction[]
   sgs_annee_scolaire         sgs_annee_scolaire           @relation(fields: [annee_scolaire_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   sgs_classe                 sgs_classe                   @relation(fields: [classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   sgs_etablissement_scolaire sgs_etablissement_scolaire   @relation(fields: [etablissement_scolaire_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -592,4 +595,32 @@ model sgs_user_resource {
   sgs_resource      sgs_resource      @relation(fields: [resource_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lkp_access_status lkp_access_status @relation(fields: [status], references: [code], onDelete: NoAction, onUpdate: NoAction)
   sgs_user          sgs_user          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model sgs_time_slot_group {
+  id                       String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                     String                     @db.VarChar(64)
+  code                     String                     @unique @db.VarChar(16)
+  description              String?                    @db.VarChar(256)
+  notes                    String?                    @db.VarChar
+  create_date              DateTime                   @db.Timestamptz(6)
+  created_by               String                     @db.VarChar(64)
+  change_date              DateTime?                  @db.Timestamptz(6)
+  changed_by               String?                    @db.VarChar(64)
+  sgs_time_slot_group_item sgs_time_slot_group_item[]
+}
+
+model sgs_time_slot_group_item {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  time_slot_group_id  String              @db.Uuid
+  jour                String              @db.VarChar(2)
+  start_time          DateTime            @db.Time(6)
+  end_time            DateTime            @db.Time(6)
+  notes               String?             @db.VarChar
+  create_date         DateTime            @db.Timestamptz(6)
+  created_by          String              @db.VarChar(64)
+  change_date         DateTime?           @db.Timestamptz(6)
+  changed_by          String?             @db.VarChar(64)
+  lkp_jour            lkp_jour            @relation(fields: [jour], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  sgs_time_slot_group sgs_time_slot_group @relation(fields: [time_slot_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

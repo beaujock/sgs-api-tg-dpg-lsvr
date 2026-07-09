@@ -157,7 +157,6 @@ export async function getUserTokenInfosById(userId : string) : Promise<InfoUserT
     }
 }
 
-
 export async function isValidTokenAndRoute(userId : string, route : string) : Promise<boolean> {
     const functionName = "isUserRouteAllowed - ";
     console.log("isUserRouteAllowed");

@@ -79,7 +79,6 @@ export async function getEleveByMatricule(eleveMatricule : string) : Promise<Ele
 export async function getEleveCurrentInscription(eleveId : string) : Promise<InscriptionDO|null> {
     const functionName = "getEleveCurrentInscription - ";
     try {
-        const anneeScolaireInscriptions:InscriptionDO[] = [];
         const connection:LSVRdbConnection = await checkConnection();
         if(!connection.isConnected || !connection.client) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
         const client:PrismaClient = connection.client;
@@ -88,19 +87,40 @@ export async function getEleveCurrentInscription(eleveId : string) : Promise<Ins
         const inscriptions = await client.sgs_inscription.findMany({
             where : {
                 eleve_id : eleveId,
-                registration_status : 'A'
-            },
-            include : {
-                sgs_salle_classe : true
-            },
+                registration_status : 'A',
+                sgs_salle_classe : {
+                    annee_scolaire_id : anneescolaire.id
+                }
+            }
         });
-        if (inscriptions.length === 0) return null;
-        inscriptions.forEach(inscription =>{
-            if (inscription.sgs_salle_classe.annee_scolaire_id === anneescolaire.id) anneeScolaireInscriptions.push(ToInscriptionDO(inscription));
+        if (inscriptions.length === 0 || inscriptions.length > 1) return null;
+        return ToInscriptionDO(inscriptions[0]);
+    }
+    catch(error) {
+        throw new Error(ErrorOrigin + functionName + error);
+    }
+}
+
+export async function getEleveInscriptionsByAnneeScolaire(eleveId : string, anneeScolaireId : string) : Promise<InscriptionDO[]> {
+    const functionName = "getEleveInscriptionsByAnneeScolaire - ";
+    try {
+        const listInscriptions:InscriptionDO[] = [];
+        const connection:LSVRdbConnection = await checkConnection();
+        if(!connection.isConnected || !connection.client) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
+        const client:PrismaClient = connection.client;
+        const inscriptions = await client.sgs_inscription.findMany({
+            where : {
+                eleve_id : eleveId,
+                registration_status : 'A',
+                sgs_salle_classe : {
+                    annee_scolaire_id : anneeScolaireId
+                }
+            }
         });
-        if (anneeScolaireInscriptions.length === 0) return null;
-        if (anneeScolaireInscriptions.length > 1) throw new Error(ErrorOrigin + functionName + "L'élève a plus d'une inscription actif. Contactez cotre aministrateur");
-        return anneeScolaireInscriptions[0];
+        inscriptions.forEach(inscription => {
+            listInscriptions.push(ToInscriptionDO(inscription));
+        });
+        return listInscriptions;
     }
     catch(error) {
         throw new Error(ErrorOrigin + functionName + error);
