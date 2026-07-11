@@ -5,6 +5,7 @@ import { getAnneeScolaireFromDate } from "./anneeScolaireFactory";
 import { PrismaClient } from "@/lib/generated/prisma/client";
 import { checkConnection } from "@/lib/LSVRdbConnect";
 import { LSVRdbConnection } from "@/types/connection/LSVRdbConnection";
+import { EvaluationDO, ToEvaluationDO } from "@/types/evaluation/EvaluationDO";
 
 const ErrorOrigin = "eleveFactory - ";
 
@@ -123,6 +124,33 @@ export async function getEleveInscriptionsByAnneeScolaire(eleveId : string, anne
         return listInscriptions;
     }
     catch(error) {
+        throw new Error(ErrorOrigin + functionName + error);
+    }
+}
+
+export async function getEleveEvaluations(eleveId:string) : Promise<EvaluationDO[]> {
+    const functionName = "getEleveEvaluations - ";
+    try {
+        const listEvaluations:EvaluationDO[] = [];
+        const connection:LSVRdbConnection = await checkConnection();
+        if(!connection.isConnected || !connection.client) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
+        const client:PrismaClient = connection.client;
+        const inscription = await getEleveCurrentInscription(eleveId);
+        if (inscription === null) return [];
+        const evaluations = await client.sgs_evaluation.findMany({
+            where : {
+                inscription_id : inscription.id,
+                sgs_inscription : {
+                    eleve_id : eleveId
+                }
+            }
+        });
+        evaluations.forEach(evaluation => {
+            listEvaluations.push(ToEvaluationDO(evaluation));
+        });
+        return listEvaluations;
+    }
+    catch(error){
         throw new Error(ErrorOrigin + functionName + error);
     }
 }

@@ -3,7 +3,6 @@ import { checkConnection } from "@/lib/LSVRdbConnect";
 import { LSVRdbConnection } from "@/types/connection/LSVRdbConnection";
 import { sgs_instruction } from "@/lib/generated/prisma/client";
 import { DetailedDisplayInstructionDO } from "@/types/instruction/DetailedDisplayInstructionDO";
-import { DbNullClass } from "@prisma/client/runtime/client";
 
 const ErrorOrigin = "instructionFactory - ";
 

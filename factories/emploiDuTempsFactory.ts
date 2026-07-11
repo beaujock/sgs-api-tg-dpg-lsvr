@@ -2,8 +2,10 @@ import { PrismaClient } from "@/lib/generated/prisma/client";
 import { checkConnection } from "@/lib/LSVRdbConnect";
 import { LSVRdbConnection } from "@/types/connection/LSVRdbConnection";
 import { DetailedDisplayElementEmploiDuTempsDO } from "@/types/emploidutemps/DetailedDisplayElementEmploiDuTempsDO";
+import { DetailedDisplayInstructionDO } from "@/types/instruction/DetailedDisplayInstructionDO";
 import { sgs_element_emploi_du_temp } from "@/lib/generated/prisma/client";
-import { getDay } from "date-fns";
+import { getDay, startOfDay } from "date-fns";
+import { ToDetailedDisplayInstructionDO } from "./instructionFactory";
 
 const ErrorOrigin = "emploiDuTempsFactory - ";
 
@@ -80,6 +82,70 @@ export async function getSalleClasseDaySchedule(salleclasseId:string, date : Dat
         return listElements;
     }
     catch(error) {
+        throw new Error(ErrorOrigin + functionName + error);
+    }
+}
+
+export async function getSalleClasseDayInstructions(salleclasseId:string, date : Date|null) : Promise<DetailedDisplayInstructionDO[]> {
+    const functionName = "getSalleClasseDayInstructions - ";
+    try {
+        const connection:LSVRdbConnection = await checkConnection();
+        if(!connection.isConnected || !connection.client) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
+        const client:PrismaClient = connection.client;
+        let theDay:Date;
+        if (date === null) theDay = new Date(Date.now()); else theDay = date;
+        const listInstructions:DetailedDisplayInstructionDO[] = [];
+        const instructions = await client.sgs_instruction.findMany({
+            where : {
+                sgs_salle_classe : {
+                    id : salleclasseId
+                },
+                instruction_date : startOfDay(theDay),
+            },
+            orderBy :{
+                start_time : 'asc'
+            }
+        });
+        if (instructions.length === 0) return [];
+        instructions.forEach(async instruction => {
+            const detailInstruction = await ToDetailedDisplayInstructionDO(instruction);
+            if (detailInstruction != null ) listInstructions.push(detailInstruction);
+            
+        });
+        return listInstructions;
+    }
+    catch(error){
+         throw new Error(ErrorOrigin + functionName + error);
+    }
+}
+
+export async function getSalleClasseDayTimeSlotInstruction(salleclasseId:string, date : Date|null, startTime : string, endTime : string) : Promise<DetailedDisplayInstructionDO|null> {
+    const functionName = "getSalleClasseDayTimeSlotInstruction - ";
+    try {
+        const connection:LSVRdbConnection = await checkConnection();
+        if(!connection.isConnected || !connection.client) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
+        const client:PrismaClient = connection.client;
+        let theDay:Date;
+        const listInstructions:DetailedDisplayInstructionDO[] = [];
+        if (date === null) theDay = startOfDay(new Date(Date.now())); else theDay = startOfDay(date);
+        const instructions = await client.sgs_instruction.findMany({
+            where : {
+                instruction_date : theDay,
+            }
+        });
+        if (instructions.length === 0) return null;
+        instructions.forEach(async instruction => {
+            if ( (new Date(instruction.start_time).toISOString().slice(11, 16) === startTime) && 
+                 (new Date(instruction.end_time).toISOString().slice(11, 16) === endTime) ) {
+                    const detailInstruction = await ToDetailedDisplayInstructionDO(instruction);
+                    if (detailInstruction != null ) listInstructions.push(detailInstruction);
+                 }
+        });
+        if (listInstructions.length === 0 || listInstructions.length > 1) return null;
+        return listInstructions[0];
+        
+    }
+    catch(error){
         throw new Error(ErrorOrigin + functionName + error);
     }
 }

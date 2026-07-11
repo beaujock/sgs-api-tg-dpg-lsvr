@@ -79,7 +79,7 @@ model sgs_administration_epreuve {
   change_date         DateTime?         @db.Timestamptz(6)
   changed_by          String?           @db.VarChar(64)
   lkp_exam_type       lkp_exam_type?    @relation(fields: [administrated_as], references: [code], onDelete: NoAction, onUpdate: NoAction)
-  sgs_matiere         sgs_matiere       @relation(fields: [epreuve_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_epreuve         sgs_epreuve       @relation(fields: [epreuve_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   sgs_salle_classe    sgs_salle_classe? @relation(fields: [salle_classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   sgs_evaluation      sgs_evaluation[]
 }
@@ -210,19 +210,20 @@ model sgs_enseignement {
 }
 
 model sgs_epreuve {
-  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  matiere_id     String      @db.Uuid
-  classe_id      String?     @db.Uuid
-  code           String      @unique @db.VarChar(32)
-  submitted_by   String?     @db.VarChar(128)
-  date_submitted DateTime?   @db.Date
-  notes          String?     @db.VarChar
-  create_date    DateTime    @db.Timestamptz(6)
-  created_by     String      @db.VarChar(64)
-  change_date    DateTime?   @db.Timestamptz(6)
-  changed_by     String?     @db.VarChar(64)
-  sgs_classe     sgs_classe? @relation(fields: [classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  sgs_matiere    sgs_matiere @relation(fields: [matiere_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                         String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  matiere_id                 String                       @db.Uuid
+  classe_id                  String?                      @db.Uuid
+  code                       String                       @unique @db.VarChar(32)
+  submitted_by               String?                      @db.VarChar(128)
+  date_submitted             DateTime?                    @db.Date
+  notes                      String?                      @db.VarChar
+  create_date                DateTime                     @db.Timestamptz(6)
+  created_by                 String                       @db.VarChar(64)
+  change_date                DateTime?                    @db.Timestamptz(6)
+  changed_by                 String?                      @db.VarChar(64)
+  sgs_administration_epreuve sgs_administration_epreuve[]
+  sgs_classe                 sgs_classe?                  @relation(fields: [classe_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_matiere                sgs_matiere                  @relation(fields: [matiere_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model sgs_etablissement_scolaire {
@@ -246,17 +247,17 @@ model sgs_etablissement_scolaire {
 }
 
 model sgs_evaluation {
-  id                         String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  inscription_id             String                      @db.Uuid
-  administration_epreuve_id  String?                     @db.Uuid
-  grade_points_obtained      Decimal                     @db.Decimal(4, 2)
-  notes                      String?                     @db.VarChar
-  create_date                DateTime                    @db.Timestamptz(6)
-  created_by                 String                      @db.VarChar(64)
-  change_date                DateTime?                   @db.Timestamptz(6)
-  changed_by                 String?                     @db.VarChar(64)
-  sgs_administration_epreuve sgs_administration_epreuve? @relation(fields: [administration_epreuve_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  sgs_inscription            sgs_inscription             @relation(fields: [inscription_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                         String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  inscription_id             String                     @db.Uuid
+  administration_epreuve_id  String                     @db.Uuid
+  grade_points_obtained      Decimal                    @db.Decimal(4, 2)
+  notes                      String?                    @db.VarChar
+  create_date                DateTime                   @db.Timestamptz(6)
+  created_by                 String                     @db.VarChar(64)
+  change_date                DateTime?                  @db.Timestamptz(6)
+  changed_by                 String?                    @db.VarChar(64)
+  sgs_administration_epreuve sgs_administration_epreuve @relation(fields: [administration_epreuve_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_inscription            sgs_inscription            @relation(fields: [inscription_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -313,7 +314,6 @@ model sgs_matiere {
   created_by                 String                       @db.VarChar(64)
   change_date                DateTime?                    @db.Timestamptz(6)
   changed_by                 String?                      @db.VarChar(64)
-  sgs_administration_epreuve sgs_administration_epreuve[]
   sgs_element_emploi_du_temp sgs_element_emploi_du_temp[]
   sgs_epreuve                sgs_epreuve[]
   sgs_instruction            sgs_instruction[]
@@ -340,7 +340,7 @@ model sgs_niveau {
 model sgs_portfolio_enseignant {
   id                       String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   salle_classe_matiere_id  String                   @db.Uuid
-  enseignant_id            String?                  @db.Uuid
+  enseignant_id            String                   @db.Uuid
   start_date               DateTime                 @db.Date
   end_date                 DateTime?                @db.Date
   notes                    String?                  @db.VarChar
@@ -348,7 +348,8 @@ model sgs_portfolio_enseignant {
   created_by               String                   @db.VarChar(64)
   change_date              DateTime?                @db.Timestamptz(6)
   changed_by               String?                  @db.VarChar(64)
-  sgs_enseignant           sgs_enseignant?          @relation(fields: [enseignant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  active                   Boolean                  @default(true)
+  sgs_enseignant           sgs_enseignant           @relation(fields: [enseignant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   sgs_salle_classe_matiere sgs_salle_classe_matiere @relation(fields: [salle_classe_matiere_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
