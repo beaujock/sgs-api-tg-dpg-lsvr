@@ -1,5 +1,6 @@
 import { LSVRdbConnection } from "@/types/connection/LSVRdbConnection";
-import { prisma } from "./prisma";
+//import { prisma } from "./prisma";
+import {prisma} from "./client";
 
 export async function checkConnection() : Promise<LSVRdbConnection> {
     //console.log("Checking Connection");
