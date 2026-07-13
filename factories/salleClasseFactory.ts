@@ -8,6 +8,9 @@ import { EleveDO, ToEleveDO } from "@/types/eleve/EleveDO";
 import { MatiereDO, ToMatiereDO } from "@/types/matiere/MatiereDO";
 import { EnseignantDO, ToEnseignantDO } from "@/types/enseignant/EnseignantDO";
 import { AdministrationEpreuveDO, ToAdministrationEpreuveDO } from "@/types/evaluation/AdministrationEpreuveDO";
+import { EleveOverviewSalleClasseDO } from "@/types/salleclasse/OverviewSalleClasseDO";
+import { EmploiDuTempsDO, ToEmploiDutempsDO } from "@/types/emploidutemps/EmploiDuTempsDO";
+import { DisplayInstructionDO } from "@/types/instruction/DisplayInstructionDO";
 
 const ErrorOrigin = "salleClasseFactory - ";
 
@@ -15,7 +18,7 @@ export async function getSalleClasseById(salleClasseId : string) : Promise<Salle
     const functionName = "getSalleClasseById - ";
     try {
         const connection:LSVRdbConnection = await checkConnection();
-        if(!connection.isConnected || !connection.client) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
+        if(!connection.isConnected || !connection.client) throw new Error(connection.connectionMessage as string);
         const client:PrismaClient = connection.client;
         const salleclasse = await client.sgs_salle_classe.findUnique({
             where : {
@@ -25,45 +28,43 @@ export async function getSalleClasseById(salleClasseId : string) : Promise<Salle
         if (!salleclasse) return null;
         return ToSalleClasseDO(salleclasse);
     }
-    catch(error){
+    catch(error:any){
         throw new Error(ErrorOrigin + functionName + error);
     }
 }
 
-export async function getSalleClasseEmploiDuTemps(salleClasseId:string) : Promise<SalleClasseDO|null> {
+export async function getSalleClasseEmploiDuTemps(salleClasseId:string) : Promise<EmploiDuTempsDO|null> {
     const functionName = "getSalleClasseEmploiDuTemps - ";
     try {
         const connection:LSVRdbConnection = await checkConnection();
-        if(!connection.isConnected || !connection.client) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
+        if(!connection.isConnected || !connection.client) throw new Error(connection.connectionMessage as string);
         const client:PrismaClient = connection.client;
         const emploidutemps = await client.sgs_emploi_du_temp.findMany({
             where : {
                 salle_classe_id : salleClasseId
-            },
-            include : {
-                sgs_salle_classe : true
             }
         });
         if (!emploidutemps || emploidutemps.length === 0 || emploidutemps.length > 1) return null;
-        return ToSalleClasseDO(emploidutemps[0].sgs_salle_classe);
+        return ToEmploiDutempsDO(emploidutemps[0]);
     }
-    catch(error){
-        throw new Error(ErrorOrigin + functionName + error);
+    catch(error:any){
+        throw new Error(ErrorOrigin + functionName + error.message);
     }
 }
 
-export async function ToOverviewSalleClasseDO(salleclasseId : string) : Promise<OverviewSalleClasseDO|null> {
-    const functionName = "ToOverviewSalleClasseDO - ";
+export async function getEleveOverviewSalleClasse(salleClasseId : string) : Promise<EleveOverviewSalleClasseDO|null> {
+    const functionName = "getEleveOverviewSalleClasse - ";
     try {
         const connection:LSVRdbConnection = await checkConnection();
-        if(!connection.isConnected || !connection.client) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
+        if(!connection.isConnected || !connection.client) throw new Error(connection.connectionMessage as string);
         const client:PrismaClient = connection.client;
-        const salleclasse = await getSalleClasseById(salleclasseId);
-        if (salleclasse === null) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
-        const listEleves:EleveDO[] = [];
+        const salleclasse = await getSalleClasseById(salleClasseId);
+        if (salleclasse === null) throw new Error(connection.connectionMessage as string);
+        //const listEleves:EleveDO[] = [];
         const listMatieres:MatiereDO[] = [];
         const listEnseignants:EnseignantDO[] = [];
         const listEpreuves:AdministrationEpreuveDO[] = [];
+        /*
         const inscriptions = await client.sgs_inscription.findMany({
             where : {
                 salle_classe_id : salleclasse.id,
@@ -76,7 +77,7 @@ export async function ToOverviewSalleClasseDO(salleclasseId : string) : Promise<
         inscriptions.forEach(inscription => {
             listEleves.push(ToEleveDO(inscription.sgs_eleve));
         });
-
+        */
         const salleclassematieres = await client.sgs_salle_classe_matiere.findMany({
             where : {
                 salle_classe_id : salleclasse.id,
@@ -119,14 +120,14 @@ export async function ToOverviewSalleClasseDO(salleclasseId : string) : Promise<
 
         return {
             salleclasse_code : salleclasse.code,
-            number_eleves : listEleves.length,
             matieres : listMatieres,
             enseignants : listEnseignants,
             epreuves : listEpreuves
         }
 
     }
-    catch(error){
-        throw new Error(ErrorOrigin + functionName + error);
+    catch(error:any){
+        throw new Error(ErrorOrigin + functionName + error.message);
     }
 }
+

@@ -29,3 +29,7 @@ export function ToEleveDO(eleve : sgs_eleve) : EleveDO {
         notes           : eleve.notes
     }
 }
+
+export function InitialsEleve(eleve : sgs_eleve) : string {
+    return eleve.last_name[0].toUpperCase() + eleve.first_name[0].toUpperCase();
+}

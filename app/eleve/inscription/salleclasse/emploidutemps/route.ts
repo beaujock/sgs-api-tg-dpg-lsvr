@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isValidTokenAndRoute, getEleveUserEleve } from "@/factories/userFactory";
 import { getEleveCurrentInscription } from "@/factories/eleveFactory";
-import { getEleveOverviewSalleClasse } from "@/factories/salleClasseFactory";
+import { getEleveOverviewSalleClasse, getSalleClasseEmploiDuTemps } from "@/factories/salleClasseFactory";
+import { getEleveEmploiDuTempsOverview } from "@/factories/emploiDuTempsFactory";
 
 export async function GET(request:NextRequest){
    //console.log("ROUTE: eleve");
@@ -15,8 +16,10 @@ export async function GET(request:NextRequest){
         if (eleve === null ) return NextResponse.json("Elève inaccessible", { status: 404 });
         const inscription = await getEleveCurrentInscription(eleve.id);
         if (inscription === null) return NextResponse.json("Inscription inaccessible", { status: 404 });
-        const overviewSalleClasse = await getEleveOverviewSalleClasse(inscription.salle_classe_id);
-        return NextResponse.json({overviewSalleClasse : overviewSalleClasse});
+        const emploidutemps = await getSalleClasseEmploiDuTemps(inscription.salle_classe_id);
+        if (emploidutemps === null) return NextResponse.json("Emploi du temps inaccessible", { status: 404 });
+        const overViewEmploiDuTemps = await getEleveEmploiDuTempsOverview(emploidutemps.id);
+        return NextResponse.json({overViewEmploiDuTemps : overViewEmploiDuTemps, emploidutemps : emploidutemps});
     }
     catch(error:any){
         return NextResponse.json({message : error.message}, { status: 500 });
