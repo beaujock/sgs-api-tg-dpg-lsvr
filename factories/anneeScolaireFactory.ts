@@ -3,6 +3,7 @@ import { ToAnneeScolaireDO } from "@/types/anneescolaire/AnneeScolaireDO";
 import { PrismaClient } from "@/lib/generated/prisma/client";
 import { LSVRdbConnection } from "@/types/connection/LSVRdbConnection";
 import { checkConnection } from "@/lib/LSVRdbConnect";
+import { getYear } from "date-fns";
 
 const ErrorOrigin = "anneeScolaireFactory - ";
 
@@ -44,6 +45,19 @@ export async function getAnneeScolaireFromDate(theDate : Date) : Promise<AnneeSc
         return ToAnneeScolaireDO(anneescolaires[0]);
     }
     catch(error){
+        throw new Error(ErrorOrigin + functionName + error);
+    }
+}
+
+export async function getShortLabelAnneeScolaire(anneescolaireId : string) : Promise<string|null> {
+    const functionName = "GetShortLabelAnneeScolaire - ";
+    try {
+        const anneescolaire = await getAnneeScolaireById(anneescolaireId);
+        if (anneescolaire === null) return null;
+        if (getYear(anneescolaire.start_date) === getYear(anneescolaire.end_date) ) return getYear(anneescolaire.end_date).toString();
+        return getYear(anneescolaire.start_date).toString() + "-" + getYear(anneescolaire.end_date).toString();
+    }
+    catch(error:any) {
         throw new Error(ErrorOrigin + functionName + error);
     }
 }

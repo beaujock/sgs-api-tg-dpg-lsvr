@@ -4,20 +4,20 @@ import { PrismaClient } from "@/lib/generated/prisma/client";
 import { UserDO, ToDisplayUserDO } from "@/types/user/UserDO";
 import { InfoUserTokenDO, ToInfoUserTokenDO } from "@/types/user/InfoUserTokenDO";
 import { CreateUserDO } from "@/types/user/CreateUserDO";
-import { InfoBasicEleveDO, ToInfoBasicEleveDO } from "@/types/eleve/InfoBasicEleveDO";
 import { EleveDO, ToEleveDO } from "@/types/eleve/EleveDO";
-import { getEleveById } from "./eleveFactory";
+import { EtablissementScolaireDO, ToEtablissementScolaireDO } from "@/types/etablissementscolaire/EtablissementScolaireDO";
 
 const ErrorOrigin = "userFactory - ";
 
 export async function getUser(login:string|null, password:string|null) : Promise<UserDO|null> {
-    console.log("Entering GETUSER");
+    //console.log("Entering GETUSER");
+    const functionName = "getUser - ";
     try {
         let user;
         if (login ===null || password === null) return null; //login or pasword cannot be null
         const connection : LSVRdbConnection = await checkConnection();
         console.log("Connection : ",connection.connectionMessage);
-        if (!connection.isConnected || !connection.client) throw new Error("Echec Connexion : " + connection.connectionMessage);
+        if (!connection.isConnected || !connection.client) throw new Error(connection.connectionMessage as string);
         const client : PrismaClient = connection.client;
         const userWithLogin = await client.sgs_user.findUnique({
             where : {user_name : login.toUpperCase()}
@@ -42,28 +42,25 @@ export async function getUser(login:string|null, password:string|null) : Promise
         if (!isPasswordValid) throw new Error("Nom d'utilisateur/email et/ou mot de passe incorrect(s)"); //invalid password
         return ToDisplayUserDO(user);
     }
-    catch(error) {
-        throw new Error("Echec - Recherche d'utilisateur : " + error);
+    catch(error:any) {
+        throw new Error(ErrorOrigin + functionName + error.message);
     }
 }
 
 export async function createUser(userToCreate : CreateUserDO) : Promise<UserDO|null> {
+    const functionName = "createUser - ";
     try {
         if (userToCreate === null) throw new Error("Information manquantes: ");
         if (userToCreate.full_name === null || userToCreate.email === null || userToCreate.pwd === null || userToCreate.created_by === null) {
             throw new Error("Information manquantes: ");
         }
         const connection : LSVRdbConnection = await checkConnection();
-        if (!connection.isConnected || !connection.client) throw new Error("Echec Connexion : " + connection.connectionMessage);
-        console.log("Connection message : ", connection.connectionMessage);
+        if (!connection.isConnected || !connection.client) throw new Error(connection.connectionMessage as string);
         const client : PrismaClient = connection.client;
         const saltRounds = Number(process.env.SALT_ROUNDS);
-        console.log("Salt rounds : ", saltRounds);
         const bcrypt = require('bcrypt');
-        console.log(" password : ", userToCreate.pwd);
         const hashedPassword = await bcrypt.hash(userToCreate.pwd, saltRounds);
         if (!hashedPassword) throw new Error("Echec création d'utilisateur");
-        console.log("Hashed password : ", hashedPassword);
         const newUser = await client.sgs_user.create({
             data : {
                 user_name : userToCreate.user_name.toUpperCase(),
@@ -78,12 +75,13 @@ export async function createUser(userToCreate : CreateUserDO) : Promise<UserDO|n
         if (!newUser) return null;
         return ToDisplayUserDO(newUser);
     }
-    catch(error) {
-        throw new Error("Echec création d'utilisateur : " +  error);
+    catch(error:any) {
+        throw new Error(ErrorOrigin + functionName + error.message);
     }
 }
 
 export async function addUserSession(userID:string, token:string, effective_date : Date, expiry_date : Date) : Promise<boolean> {
+    const functionName = "addUserSession - ";
   try {
     if (!userID || !token || !effective_date || !expiry_date) {
       console.log ("issue with user id or token or ExpiresAT")
@@ -92,7 +90,7 @@ export async function addUserSession(userID:string, token:string, effective_date
 
     const connection: LSVRdbConnection = await checkConnection();
     if (!connection.isConnected || !connection.client) {
-        throw new Error("La connexion à la base de données a échoué: " + connection.connectionMessage);
+        throw new Error(connection.connectionMessage as string);
     };
     const client : PrismaClient = connection.client;
     const userUpdated = await client.sgs_user.update({
@@ -106,21 +104,21 @@ export async function addUserSession(userID:string, token:string, effective_date
       }
     });
     if (!userUpdated) {
-      //console.log("Echec : Ajout de session de l'utilisateur");
       return false;
     }
     return true;
   }
-  catch(error) {
-    throw new Error("La création de la session de l'utilisateur a échoué");
+  catch(error:any) {
+    throw new Error(ErrorOrigin + functionName + error.message);
   }
 }
 
 export async function getUserRoles(userID : string) : Promise<string[]> {
+    const functionName = "getUserRoles - ";
     try {
         const userRoles : string[] = [];
         const connection : LSVRdbConnection = await checkConnection();
-        if (!connection.isConnected || !connection.client) throw new Error("La connexion à la base de données a échoué: " + connection.connectionMessage);
+        if (!connection.isConnected || !connection.client) throw new Error(connection.connectionMessage as string);
         const client : PrismaClient = connection.client;
         const roles = await client.sgs_user_role.findMany({
             where : {
@@ -134,8 +132,8 @@ export async function getUserRoles(userID : string) : Promise<string[]> {
         });
         return userRoles;
     }
-    catch(error){
-        throw new Error("Echec : Recherche de roles de l'utilisateur");
+    catch(error:any){
+        throw new Error(ErrorOrigin + functionName + error.message);
     }
 }
 
@@ -143,7 +141,7 @@ export async function getUserTokenInfosById(userId : string) : Promise<InfoUserT
     const functionName = "getUserTokenInfosById - ";
     try {
         const connection:LSVRdbConnection = await checkConnection();
-        if(!connection.isConnected || !connection.client) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
+        if(!connection.isConnected || !connection.client) throw new Error(connection.connectionMessage as string);
         const client:PrismaClient = connection.client;
         const user = await client.sgs_user.findUnique({
             where : {
@@ -160,22 +158,16 @@ export async function getUserTokenInfosById(userId : string) : Promise<InfoUserT
 
 export async function isValidTokenAndRoute(userId : string, route : string) : Promise<boolean> {
     const functionName = "isValidTokenAndRoute - ";
-    console.log("isUserRouteAllowed");
     try {
         const userTokenInfos = await getUserTokenInfosById(userId);
-        console.log("userTokenInfos");
-        if (!userTokenInfos) throw new Error(ErrorOrigin + functionName + "Accès non authorisé - Pas de jeton");
+        if (!userTokenInfos) throw new Error("Accès non authorisé - Pas de jeton");
         if (!userTokenInfos.token || !userTokenInfos.token_effective_date || !userTokenInfos.token_expiry_date) throw new Error("Accès non authorisé - Jeton invalide");
         const jwt = require('jsonwebtoken');
         const JWT_SECRET = process.env.JWT_SECRET;
         const decodedPayload = jwt.verify(userTokenInfos.token,JWT_SECRET);
-        console.log("decodedPayload");
         if (!decodedPayload) throw new Error("Accès non authorisé - Jeton non décodé");
-        console.log("good route ?");
         const today = new Date(Date.now());
-        console.log("Token details", userTokenInfos);
         if ((today < userTokenInfos.token_effective_date) || (today > userTokenInfos.token_expiry_date)) throw new Error("Accès non authorisé - Jeton expiré");
-        console.log("compare date ?");
         if (!(decodedPayload.user.roles).includes(route.toUpperCase())) return false;
         return true;
     }
@@ -184,7 +176,7 @@ export async function isValidTokenAndRoute(userId : string, route : string) : Pr
     }
 }
 
-export async function getUserEleveResource(userId : string) : Promise<InfoBasicEleveDO|null> {
+export async function getUserEleveResource(userId : string) : Promise<EleveDO|null> {
     console.log("getUserEleveResource");
     const functionName = "getUserEleveResource - ";
     try {
@@ -193,38 +185,63 @@ export async function getUserEleveResource(userId : string) : Promise<InfoBasicE
         if (!isUserAllowed) return null;
         console.log("USER IS ALLOWED");
         const connection : LSVRdbConnection = await checkConnection();
-        if (!connection.isConnected || !connection.client) throw new Error("La connexion à la base de données a échoué: " + connection.connectionMessage);
+        if (!connection.isConnected || !connection.client) throw new Error(connection.connectionMessage as string);
         const client : PrismaClient = connection.client;
         const userResources = await client.sgs_user_resource.findMany({
             where : {
                 user_id : userId,
-                status : 'A'
-            },
-            include : {
-                sgs_resource : true
+                status : 'A',
+                resource_type : 'ELEVE'
             }
         });
-        console.log("USER resources", userResources);
-        userResources.forEach(userResource => {
-            if (userResource.sgs_resource.resource_type.toUpperCase() === 'ELEVE') eleveIDs.push(userResource.sgs_resource.resource_id);
-        });
-        if (eleveIDs.length === 0) return null;
-        if (eleveIDs.length > 1) return null;
-        console.log("Eleve IDs", eleveIDs);
+        console.log("USER Resources", userResources);
+        if (userResources.length === 0 || userResources.length > 1) return null;
         const eleve = await client.sgs_eleve.findUnique({
             where : {
-                id : eleveIDs[0]
+                id : userResources[0].resource_id
             }
         });
-        console.log("Eleve", eleve);
         if (!eleve) return null;
-        return ToInfoBasicEleveDO(eleve);
+        return ToEleveDO(eleve);
     }
-    catch(error) {
-        throw new Error(ErrorOrigin + functionName + error);
+    catch(error:any) {
+        throw new Error(ErrorOrigin + functionName + error.message);
     }
 }
 
+export async function getUserAdminEcoleResource(userId : string) : Promise<EtablissementScolaireDO|null> {
+    //console.log("getUserAdminEcoleResource");
+    const functionName = "getUserAdminEcoleResource - ";
+    try {
+        const eleveIDs:string[] = [];
+        const isUserAllowed = await isValidTokenAndRoute(userId, 'ADMIN_ECOLE');
+        if (!isUserAllowed) return null;
+        console.log("USER IS ALLOWED");
+        const connection : LSVRdbConnection = await checkConnection();
+        if (!connection.isConnected || !connection.client) throw new Error(connection.connectionMessage as string);
+        const client : PrismaClient = connection.client;
+        const userResources = await client.sgs_user_resource.findMany({
+            where : {
+                user_id : userId,
+                status : 'A',
+                resource_type : 'ETABSCO'
+            }
+        });
+        if (userResources.length === 0 || userResources.length > 1) return null;
+        const ecole = await client.sgs_etablissement_scolaire.findUnique({
+            where : {
+                id : userResources[0].resource_id
+            }
+        });
+        if (!ecole) return null;
+        return ToEtablissementScolaireDO(ecole);
+    }
+    catch(error:any) {
+        throw new Error(ErrorOrigin + functionName + error.message);
+    }
+}
+
+/*
 export async function getEleveUserEleve(userId : string) : Promise<EleveDO|null> {
 
     const functionName = "getEleveUserEleve - ";
@@ -262,4 +279,4 @@ export async function getEleveUserEleve(userId : string) : Promise<EleveDO|null>
         throw new Error(ErrorOrigin + functionName + error);
     }
 }
-
+*/
