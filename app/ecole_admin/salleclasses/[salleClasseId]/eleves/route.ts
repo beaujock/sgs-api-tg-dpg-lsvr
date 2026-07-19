@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserAdminEcoleResource } from "@/factories/userFactory";
 
-import { getSalleClasseOverview } from "@/factories/salleClasseFactory";
+
+import { getSalleClasseEleves } from "@/factories/salleClasseFactory";
+import { ToOverviewEleveDO } from "@/types/eleve/OverviewEleveDO";
 
 export async function GET(request:NextRequest, { params }: { params: Promise<{salleClasseId: string }> }){
     try {
@@ -9,16 +11,16 @@ export async function GET(request:NextRequest, { params }: { params: Promise<{sa
         const userID = searchParams.get('userID');
         if(!userID) return NextResponse.json("Requête invalide (utilisateur inconnu)", { status: 400 });
         const salleClasseID = (await params).salleClasseId;
-        console.log("Salleclasse ID = ",salleClasseID);
         if(!salleClasseID) return NextResponse.json("Requête invalide (classe inconnu)", { status: 400 });
         const ecole = await getUserAdminEcoleResource(userID);
         if(!ecole) return NextResponse.json("Etablissement scolaire non disponible", { status: 400 });
-        const salleclasseOverview = await getSalleClasseOverview(salleClasseID);
-        //const salleclasse = await getSalleClasseById(salleClasseID);
-        //console.log("Salleclasse  = ", salleclasse);
-        //if(!salleclasse) return NextResponse.json("Classe non retrouvé)", { status: 400 });
-        //const overviewSalleclasse = await ToOverviewSalleClasseDO(salleclasse);
-        return NextResponse.json({salleClasseOverview : salleclasseOverview}); 
+        const eleves = await getSalleClasseEleves(salleClasseID);
+        const elevesOverviewPromises = eleves.map(async eleve => {
+            const overviewEleve = await ToOverviewEleveDO(eleve);
+            return overviewEleve;
+        });
+        const elevesOverview = await Promise.all(elevesOverviewPromises);
+        return NextResponse.json({elevesOverview : elevesOverview}); 
     }
     catch(error:any){
         return NextResponse.json({message : error.message}, { status: 500 });

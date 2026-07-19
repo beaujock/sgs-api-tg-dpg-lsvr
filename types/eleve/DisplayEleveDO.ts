@@ -1,6 +1,7 @@
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { sgs_eleve } from "@/lib/generated/prisma/client";
+import { EleveDO } from './EleveDO';
 
 
 export type DisplayEleveDO = {
@@ -14,7 +15,7 @@ export type DisplayEleveDO = {
     notes           : string|null;
 }
 
-export async function ToDisplayEleveDO(eleve : sgs_eleve) : Promise<DisplayEleveDO> {
+export function ToDisplayEleveDO(eleve : sgs_eleve|EleveDO) : DisplayEleveDO {
     
     let fullname:string = eleve.first_name;
     if ( !(!eleve.other_names || !eleve.other_names.trim()) ) fullname = fullname + eleve.other_names.split(" ")[0];
@@ -40,7 +41,7 @@ export type EleveDisplayEleveDO = {
     email           : string|null;
 }
 
-export function ToEleveDisplayEleveDO(eleve : sgs_eleve) : EleveDisplayEleveDO {
+export function ToEleveDisplayEleveDO(eleve : sgs_eleve|EleveDO) : EleveDisplayEleveDO {
     return {
         matricule   : eleve.matricule,
         full_name   : eleve.last_name + " " + eleve.first_name,

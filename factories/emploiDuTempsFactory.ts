@@ -5,10 +5,10 @@ import { DetailedDisplayElementEmploiDuTempsDO } from "@/types/emploidutemps/Det
 import { DetailedDisplayInstructionDO } from "@/types/instruction/DetailedDisplayInstructionDO";
 import { sgs_element_emploi_du_temp } from "@/lib/generated/prisma/client";
 import { getDay, startOfDay } from "date-fns";
-import { ToDetailedDisplayInstructionDO } from "./instructionFactory";
 import { OverviewElementEmploiDuTempsDO, OverviewEmploiDuTempsDO  } from "@/types/emploidutemps/OverviewEmploiDuTempsDO";
 import { EmploiDuTempsDO, ToEmploiDutempsDO } from "@/types/emploidutemps/EmploiDuTempsDO";
 import { getSalleClasseById } from "./salleClasseFactory";
+import { DisplayInstructionDO, ToDisplayInstructionDO } from "@/types/instruction/DisplayInstructionDO";
 
 const ErrorOrigin = "emploiDuTempsFactory - ";
 
@@ -128,7 +128,7 @@ export async function getSalleClasseDaySchedule(salleclasseId:string, date : Dat
     }
 }
 
-export async function getSalleClasseDayInstructions(salleclasseId:string, date : Date|null) : Promise<DetailedDisplayInstructionDO[]> {
+export async function getSalleClasseDayInstructions(salleclasseId:string, date : Date|null) : Promise<DisplayInstructionDO[]> {
     const functionName = "getSalleClasseDayInstructions - ";
     try {
         const connection:LSVRdbConnection = await checkConnection();
@@ -148,20 +148,21 @@ export async function getSalleClasseDayInstructions(salleclasseId:string, date :
                 start_time : 'asc'
             }
         });
-        if (instructions.length === 0) return [];
-        instructions.forEach(async instruction => {
-            const detailInstruction = await ToDetailedDisplayInstructionDO(instruction);
-            if (detailInstruction != null ) listInstructions.push(detailInstruction);
-            
-        });
-        return listInstructions;
+
+        const instructionsDisplaysPromises = instructions.map(async instruction => {
+                    const displayInstruction = await ToDisplayInstructionDO(instruction);
+                    return displayInstruction;
+                });
+        const instructionsDisplays = await Promise.all(instructionsDisplaysPromises);
+
+        return instructionsDisplays.filter(item => item !== null);
     }
     catch(error:any){
          throw new Error(ErrorOrigin + functionName + error.message);
     }
 }
 
-export async function getSalleClasseDayTimeSlotInstruction(salleclasseId:string, date : Date|null, startTime : string, endTime : string) : Promise<DetailedDisplayInstructionDO|null> {
+export async function getSalleClasseDayTimeSlotInstruction(salleclasseId:string, date : Date|null, startTime : string, endTime : string) : Promise<DisplayInstructionDO|null> {
     const functionName = "getSalleClasseDayTimeSlotInstruction - ";
     try {
         const connection:LSVRdbConnection = await checkConnection();
@@ -176,15 +177,7 @@ export async function getSalleClasseDayTimeSlotInstruction(salleclasseId:string,
             }
         });
         if (instructions.length === 0) return null;
-        instructions.forEach(async instruction => {
-            if ( (new Date(instruction.start_time).toISOString().slice(11, 16) === startTime) && 
-                 (new Date(instruction.end_time).toISOString().slice(11, 16) === endTime) ) {
-                    const detailInstruction = await ToDetailedDisplayInstructionDO(instruction);
-                    if (detailInstruction != null ) listInstructions.push(detailInstruction);
-                 }
-        });
-        if (listInstructions.length === 0 || listInstructions.length > 1) return null;
-        return listInstructions[0];
+        return ToDisplayInstructionDO(instructions[0]);
         
     }
     catch(error:any){
@@ -192,8 +185,8 @@ export async function getSalleClasseDayTimeSlotInstruction(salleclasseId:string,
     }
 }
 
-export async function getEleveEmploiDuTempsOverview(emploidutempsId:string) : Promise<OverviewEmploiDuTempsDO|null> {
-     const functionName = "getEleveEmploiDuTempsOverview - ";
+export async function getEmploiDuTempsOverview(emploidutempsId:string) : Promise<OverviewEmploiDuTempsDO|null> {
+     const functionName = "getEmploiDuTempsOverview - ";
     try {
         const connection:LSVRdbConnection = await checkConnection();
         if(!connection.isConnected || !connection.client) throw new Error(connection.connectionMessage as string);

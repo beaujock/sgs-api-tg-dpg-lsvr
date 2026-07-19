@@ -27,7 +27,7 @@ export async function getSalleClasseById(salleClasseId : string) : Promise<Salle
         return ToSalleClasseDO(salleclasse);
     }
     catch(error:any){
-        throw new Error(ErrorOrigin + functionName + error);
+        throw new Error(ErrorOrigin + functionName + error.message);
     }
 }
 
@@ -156,7 +156,6 @@ export async function getSalleClasseOverview(salleClasseId:string) : Promise<Ove
 {
      const functionName = "getSalleClasseOverview - ";
       try {
-        const listEpreuveAdministres:AdministrationEpreuveDO[] = [];
         const connection:LSVRdbConnection = await checkConnection();
         if(!connection.isConnected || !connection.client) throw new Error(connection.connectionMessage as string);
         const client:PrismaClient = connection.client;

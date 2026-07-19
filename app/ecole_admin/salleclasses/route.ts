@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
-import { InfoUserTokenDO } from "@/types/user/InfoUserTokenDO";
-import { getUserAdminEcoleResource, getUserEleveResource } from "@/factories/userFactory";
-import { getEtablissementScolaireOverview, getEtablissementScolaireSalleClasses } from "@/factories/etablissementScolaireFactory";
-import { OverviewSalleClasseDO, ToOverviewSalleClasseDO } from "@/types/salleclasse/OverviewSalleClasseDO";
+import { getUserAdminEcoleResource } from "@/factories/userFactory";
+import { getEtablissementScolaireSalleClasses } from "@/factories/etablissementScolaireFactory";
+import { ToOverviewSalleClasseDO } from "@/types/salleclasse/OverviewSalleClasseDO";
 
 export async function GET(request:NextRequest){
    //console.log("ROUTE: eleve");
@@ -22,9 +20,9 @@ export async function GET(request:NextRequest){
         });
         const listSalleClassesOveriew = await Promise.all(overviewPromises);
 
-        return NextResponse.json({overviewSalleClasses : listSalleClassesOveriew}); 
+        return NextResponse.json({salleClassesOverview : listSalleClassesOveriew}); 
     }
-    catch(error){
-        return NextResponse.json({message : error}, { status: 500 });
+    catch(error:any){
+        return NextResponse.json({message : error.message}, { status: 500 });
     }
 }

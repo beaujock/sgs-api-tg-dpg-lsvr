@@ -6,6 +6,9 @@ import { PrismaClient } from "@/lib/generated/prisma/client";
 import { checkConnection } from "@/lib/LSVRdbConnect";
 import { LSVRdbConnection } from "@/types/connection/LSVRdbConnection";
 import { EvaluationDO, ToEvaluationDO } from "@/types/evaluation/EvaluationDO";
+import { PresenceDO, ToPresenceDO } from "@/types/presence/PresenceDO";
+import { DisplayPresenceDO, ToDisplayPresenceDO } from "@/types/presence/DisplayPresenceDO";
+import { OverviewEleveDO, ToOverviewEleveDO } from "@/types/eleve/OverviewEleveDO";
 
 const ErrorOrigin = "eleveFactory - ";
 
@@ -155,3 +158,52 @@ export async function getEleveEvaluations(eleveId:string) : Promise<EvaluationDO
     }
 }
 
+export async function getEleveAbsences(eleveId:string) : Promise<PresenceDO[]> {
+    const functionName = "getEleveAbsences - ";
+    try {
+        const listAbsences:DisplayPresenceDO[] = [];
+        const connection:LSVRdbConnection = await checkConnection();
+        if(!connection.isConnected || !connection.client) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
+        const client:PrismaClient = connection.client;
+        const inscription = await getEleveCurrentInscription(eleveId);
+        if (inscription === null) return [];
+        const absences = await client.sgs_presence.findMany({
+            where : {
+                eleve_id : eleveId,
+                attendance_status : 'A',
+                sgs_instruction : {
+                    sgs_salle_classe : {
+                        id : inscription.salle_classe_id
+                    }
+                }
+            },
+            orderBy : [
+                {
+                    sgs_instruction : {
+                        instruction_date : 'asc'
+                    }
+                }
+            ]
+        });
+        return absences;
+    }
+    catch(error){
+        throw new Error(ErrorOrigin + functionName + error);
+    }
+}
+
+export async function getEleveOverview(eleveId:string) : Promise<OverviewEleveDO|null> {
+    const functionName = "getEleveOverview - ";
+          try {
+            const connection:LSVRdbConnection = await checkConnection();
+            if(!connection.isConnected || !connection.client) throw new Error(connection.connectionMessage as string);
+            const client:PrismaClient = connection.client;
+            const eleve = await getEleveById(eleveId);
+            if(!eleve || eleve === null) return null;
+            return ToOverviewEleveDO(eleve);
+    
+        }
+        catch(error:any) {
+            throw new Error(ErrorOrigin + functionName + error.message);
+        }
+}

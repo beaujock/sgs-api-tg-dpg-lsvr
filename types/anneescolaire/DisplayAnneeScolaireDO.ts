@@ -1,7 +1,6 @@
 
 
 import { sgs_annee_scolaire } from "@/lib/generated/prisma/client";
-import { getYear } from "date-fns";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
