@@ -9,6 +9,7 @@ import { AdministrationEpreuveDO, ToAdministrationEpreuveDO } from "@/types/eval
 
 import { EmploiDuTempsDO, ToEmploiDutempsDO } from "@/types/emploidutemps/EmploiDuTempsDO";
 import { OverviewSalleClasseDO, ToOverviewSalleClasseDO } from "@/types/salleclasse/OverviewSalleClasseDO";
+import { CreateSalleClasseDO } from "@/types/salleclasse/CreateSalleClasseDO";
 
 const ErrorOrigin = "salleClasseFactory - ";
 
@@ -25,6 +26,26 @@ export async function getSalleClasseById(salleClasseId : string) : Promise<Salle
         });
         if (!salleclasse) return null;
         return ToSalleClasseDO(salleclasse);
+    }
+    catch(error:any){
+        throw new Error(ErrorOrigin + functionName + error.message);
+    }
+}
+
+export async function getSalleClasseByCode(etablissementScolaireId:string, salleClasseCode : string) : Promise<SalleClasseDO|null> {
+    const functionName = "getSalleClasseById - ";
+    try {
+        const connection:LSVRdbConnection = await checkConnection();
+        if(!connection.isConnected || !connection.client) throw new Error(connection.connectionMessage as string);
+        const client:PrismaClient = connection.client;
+        const salleclasses = await client.sgs_salle_classe.findMany({
+            where : {
+                etablissement_scolaire_id : etablissementScolaireId,
+                code : salleClasseCode
+            }
+        });
+        if (!salleclasses || salleclasses.length === 0 || salleclasses.length > 1) return null;
+        return ToSalleClasseDO(salleclasses[0]);
     }
     catch(error:any){
         throw new Error(ErrorOrigin + functionName + error.message);
@@ -156,12 +177,38 @@ export async function getSalleClasseOverview(salleClasseId:string) : Promise<Ove
 {
      const functionName = "getSalleClasseOverview - ";
       try {
-        const connection:LSVRdbConnection = await checkConnection();
-        if(!connection.isConnected || !connection.client) throw new Error(connection.connectionMessage as string);
-        const client:PrismaClient = connection.client;
         const salleclasse = await getSalleClasseById(salleClasseId);
         if(!salleclasse || salleclasse === null) return null;
         return ToOverviewSalleClasseDO(salleclasse);
+
+    }
+    catch(error:any) {
+        throw new Error(ErrorOrigin + functionName + error.message);
+    }
+}
+
+export async function createSalleClasse(data:CreateSalleClasseDO) : Promise<SalleClasseDO|null> {
+    const functionName = "createSalleClasse - ";
+      try {
+        const connection:LSVRdbConnection = await checkConnection();
+        if(!connection.isConnected || !connection.client) throw new Error(connection.connectionMessage as string);
+        const client:PrismaClient = connection.client;
+        const salleClassefromCode = await getSalleClasseByCode(data.etablissement_scolaire_id,data.code);
+        if (salleClassefromCode !== null) throw new Error("Le code de la classe déjà utilisé");
+        const salleclasse = await client.sgs_salle_classe.create({
+            data : {
+                etablissement_scolaire_id : data.etablissement_scolaire_id,
+                annee_scolaire_id : data.annee_scolaire_id,
+                classe_id : data.classe_id,
+                code : data.code,
+                description : data.description,
+                notes : data.description,
+                created_by : data.created_by,
+                create_date : new Date(Date.now())
+            }
+        });
+        if(!salleclasse || salleclasse === null) return null;
+        return ToSalleClasseDO(salleclasse);
 
     }
     catch(error:any) {
