@@ -12,6 +12,8 @@ export type DisplayClasseDO = {
     notes            : string|null;
 }
 
+/*
 export async function ToDisplayClasseDO (classe : sgs_classe) : Promise<DisplayClasseDO> {
     
 }
+*/
