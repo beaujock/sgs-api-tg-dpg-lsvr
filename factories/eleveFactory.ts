@@ -207,3 +207,51 @@ export async function getEleveOverview(eleveId:string) : Promise<OverviewEleveDO
             throw new Error(ErrorOrigin + functionName + error.message);
         }
 }
+
+export async function searchEleves(key:string) {
+    const functionName = "searchEleves - ";
+    try {
+        const connection:LSVRdbConnection = await checkConnection();
+        if(!connection.isConnected || !connection.client) throw new Error(ErrorOrigin + functionName + connection.connectionMessage);
+        const client:PrismaClient = connection.client;
+        const eleves = await client.sgs_eleve.findMany({
+            where : {
+                OR : [
+                    {
+                        last_name : {
+                        contains : key,
+                        mode : 'insensitive'
+                        }
+                    },
+                    {
+                        first_name : {
+                        contains : key,
+                        mode : 'insensitive'
+                        }
+                    },
+                    {
+                        other_names : {
+                        contains : key,
+                        mode : 'insensitive'
+                        }
+                    },
+                    {
+                        preferred_name : {
+                        contains : key,
+                        mode : 'insensitive'
+                        }
+                    },
+                    {
+                        matricule : {
+                        contains : key,
+                        mode : 'insensitive'
+                        }
+                    },
+                ]
+            }
+        })
+    }
+    catch(error:any) {
+        throw new Error(ErrorOrigin + functionName + error);
+    }
+}
