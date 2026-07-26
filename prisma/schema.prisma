@@ -243,6 +243,7 @@ model sgs_etablissement_scolaire {
   created_by             String             @db.VarChar(64)
   change_date            DateTime?          @db.Timestamptz(6)
   changed_by             String?            @db.VarChar(64)
+  sgs_menu               sgs_menu[]
   sgs_salle_classe       sgs_salle_classe[]
 }
 
@@ -461,6 +462,7 @@ model sgs_role {
   created_by    String          @db.VarChar(64)
   change_date   DateTime?       @db.Timestamptz(6)
   changed_by    String?         @db.VarChar(64)
+  sgs_menu      sgs_menu[]
   sgs_user_role sgs_user_role[]
 }
 
@@ -559,4 +561,37 @@ model sgs_time_slot_group_item {
   changed_by          String?             @db.VarChar(64)
   lkp_jour            lkp_jour            @relation(fields: [jour], references: [code], onDelete: NoAction, onUpdate: NoAction)
   sgs_time_slot_group sgs_time_slot_group @relation(fields: [time_slot_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model sgs_menu {
+  id                         String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  etablissement_scolaire_id  String                     @db.Uuid
+  role_id                    String                     @db.Uuid
+  active                     Boolean                    @default(true)
+  rank                       Int
+  label                      String                     @db.VarChar(64)
+  notes                      String?                    @db.VarChar
+  create_date                DateTime                   @db.Timestamptz(6)
+  created_by                 String                     @db.VarChar(64)
+  change_date                DateTime?                  @db.Timestamptz(6)
+  changed_by                 String?                    @db.VarChar(64)
+  sgs_etablissement_scolaire sgs_etablissement_scolaire @relation(fields: [etablissement_scolaire_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_role                   sgs_role                   @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sgs_menu_item              sgs_menu_item[]
+}
+
+model sgs_menu_item {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  menu_id     String    @db.Uuid
+  active      Boolean   @default(true)
+  rank        Int
+  icon        String?   @db.VarChar(64)
+  label       String    @db.VarChar(64)
+  href        String    @default("/") @db.VarChar(128)
+  notes       String?   @db.VarChar
+  create_date DateTime  @db.Timestamptz(6)
+  created_by  String    @db.VarChar(64)
+  change_date DateTime? @db.Timestamptz(6)
+  changed_by  String?   @db.VarChar(64)
+  sgs_menu    sgs_menu  @relation(fields: [menu_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
